@@ -116,9 +116,8 @@ pytest tests/ -v
 ## Tech Stack
 
 - **Python 3.8+**
-- **Streamlit** ? UI and file uploads
-- **pathlib** ? Cross-platform paths
-- **pytest** ? Tests (optional)
+- **Streamlit** -> UI and file uploads
+- **pathlib** -> Cross-platform paths
 
 ---
 
