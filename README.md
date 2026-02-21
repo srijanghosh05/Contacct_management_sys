@@ -1,4 +1,4 @@
-# Directory ? Contact Management System
+# Directory -> Contact Management System
 
 A sleek, dark-mode contact directory built with **Python** and **Streamlit**. Manage your contacts with a modern UI: add photos, search instantly, edit or delete with confirmation, and keep everything in sync with local JSON storage.
 
