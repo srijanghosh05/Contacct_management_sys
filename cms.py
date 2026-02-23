@@ -127,7 +127,10 @@ class ContactManagementSystem:
             return False, "Name and phone number are required."
 
         if not _valid_phone(phone):
-            return False, "Phone number must be exactly 10 digits (excluding the +91 country code)."
+            return False, (
+                "Phone must be a 10-digit number (optional +91 prefix) "
+                "or a short emergency/helpline number (3–5 digits, e.g. 100, 112, 1098)."
+            )
 
         if phone in self._phone_set:
             return False, f"A contact with phone '{phone}' already exists."
@@ -178,7 +181,10 @@ class ContactManagementSystem:
             return False, "Name and phone number are required."
 
         if not _valid_phone(new_phone):
-            return False, "Phone number must be exactly 10 digits (excluding the +91 country code)."
+            return False, (
+                "Phone must be a 10-digit number (optional +91 prefix) "
+                "or a short emergency/helpline number (3–5 digits, e.g. 100, 112, 1098)."
+            )
 
         if new_email and not _valid_email(new_email):
             return False, "Please enter a valid email address."
@@ -229,28 +235,46 @@ class ContactManagementSystem:
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
-# Matches exactly 10 digits after an optional +91 / 91 prefix
+# Matches an optional +91 / 91 prefix (with optional separators)
 # (spaces, hyphens, and dots between digits are ignored before counting)
 _PHONE_PREFIX_RE = re.compile(r"^(?:\+?91[\s\-.]?)?")
+
+# Short emergency / helpline numbers are purely numeric, 3–5 digits,
+# and carry no country-code prefix (e.g. 100, 112, 1091, 1098).
+_EMERGENCY_RE = re.compile(r"^\d{3,5}$")
 
 
 def _valid_phone(phone: str) -> bool:
     """
-    Return True if *phone* contains exactly 10 digits after stripping
-    an optional leading +91 / 91 country code and any separators.
+    Return True if *phone* is a valid number in either of two forms:
+
+    1. Standard 10-digit Indian mobile/landline number
+       - Optional leading +91 / 91 country code (with spaces, hyphens, or dots).
+       - Separators (spaces, hyphens, dots) between digit groups are ignored.
+    2. Short emergency / helpline number
+       - 3 to 5 digits with no country-code prefix.
+       - Examples: 100 (Police), 101 (Fire), 102/108 (Ambulance),
+         112 (National Emergency), 1091 (Women Helpline), 1098 (Child Helpline).
 
     Valid examples
     --------------
-    9876543210          → ✓
-    +91 98765 43210     → ✓
-    91-9876-543210      → ✓
-    +919876543210       → ✓
-    12345               → ✗  (too short)
+    9876543210          → ✓  (standard 10-digit)
+    +91 98765 43210     → ✓  (standard with country code)
+    100                 → ✓  (emergency)
+    112                 → ✓  (emergency)
+    1091                → ✓  (helpline)
+    1098                → ✓  (helpline)
+    12345               → ✗  (not emergency and not 10-digit)
     +1 9876543210       → ✗  (wrong country code)
     """
-    # Strip leading country code (+91 or 91)
-    stripped = _PHONE_PREFIX_RE.sub("", phone.strip())
-    # Remove separators (spaces, hyphens, dots)
+    clean = phone.strip()
+
+    # Fast path: short emergency / helpline number (no prefix stripping needed)
+    if _EMERGENCY_RE.match(re.sub(r"[\s\-.]", "", clean)):
+        return True
+
+    # Standard path: strip optional +91/91 prefix then check for 10 digits
+    stripped = _PHONE_PREFIX_RE.sub("", clean)
     digits = re.sub(r"[\s\-.]", "", stripped)
     return digits.isdigit() and len(digits) == 10
 
